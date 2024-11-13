@@ -1,23 +1,23 @@
 .wrapper {
-  @apply flex min-h-full flex-1 flex-col justify-center items-center px-6 py-12 lg:px-8;
+  @apply bg-[#f5f5f7] min-h-screen flex items-center justify-center;
 }
 
-.form {
-  @apply flex flex-col gap-5;
+.title {
+  @apply text-center text-2xl font-semibold text-[#1d1d1f];
 }
 
-.formWrapper {
-  @apply mt-10 sm:mx-auto sm:w-full w-full sm:max-w-sm;
+.panel {
+  @apply bg-white rounded-xl shadow-lg p-8 w-[400px] border border-[#d2d2d7];
 }
 
-.inputWrapper {
-  @apply flex flex-col gap-1;
+.input {
+  @apply w-full px-4 py-2 rounded-lg border border-[#d2d2d7] focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] transition-colors;
 }
 
 .button {
-  @apply flex w-full font-bold text-lg;
+  @apply w-full bg-[#0071e3] hover:bg-[#0077ED] text-white font-medium py-2 px-4 rounded-lg transition-colors;
 }
 
 .label {
-  @apply font-bold text-[16px];
+  @apply text-sm text-[#1d1d1f] font-medium;
 }

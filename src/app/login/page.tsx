@@ -7,26 +7,59 @@ import { FormEvent, useState } from "react";
 import styles from "./styles.module.css";
 import { useRouter } from "next/navigation";
 
+interface LoginError extends Error {
+  code?: string;
+  status?: number;
+}
+
 export default function LoginPage() {
   const { replace } = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
-  const submit = (e: FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    replace("/");
+    setError("");
+
+    try {
+      if (!email || !password) {
+        throw new Error("Por favor complete todos los campos");
+      }
+
+      const res = await fetch("/api/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Credenciales inválidas");
+      }
+
+      const data = await res.json();
+
+      if (!data.token) {
+        throw new Error();
+      }
+
+      replace("/");
+    } catch (err: unknown) {
+      const error = err as LoginError;
+      setError(error.message || "Ha ocurrido un error al iniciar sesión");
+    }
   };
 
   return (
     <div className={styles.wrapper}>
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-          Iniciar sesión con tu cuenta
-        </h2>
-      </div>
-      <div className={styles.formWrapper}>
-        <form onSubmit={submit} className={styles.form}>
-          <div className={styles.inputWrapper}>
+      <div className={styles.panel}>
+        <div className="mb-8">
+          <h2 className={styles.title}>Bienvenido</h2>
+        </div>
+        <form onSubmit={submit} className="space-y-6">
+          <div className="space-y-2">
             <Label className={styles.label} htmlFor="email">
               Correo electrónico
             </Label>
@@ -37,10 +70,14 @@ export default function LoginPage() {
               required
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              className={styles.input}
             />
           </div>
-          <div className={styles.inputWrapper}>
+          <div className="space-y-2">
             <Label className={styles.label} htmlFor="password">
               Contraseña
             </Label>
@@ -49,14 +86,19 @@ export default function LoginPage() {
               name="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
               required
+              className={styles.input}
             />
           </div>
           <div>
             <Button type="submit" className={styles.button}>
               Iniciar sesión
             </Button>
+            {error && <p className="text-[#ff3b30] text-sm mt-2">{error}</p>}
           </div>
         </form>
       </div>

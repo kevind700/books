@@ -1,0 +1,130 @@
+{
+  "users": [
+    {
+      "id": "37F35ADF-4045-4F6E-95D3-36C86E2A3030",
+      "firstName": "John",
+      "lastName": "Smith",
+      "email": "example@example.com",
+      "password": "admin123"
+    },
+    {
+      "id": "58B24EFC-1234-5678-ABCD-98765432DCBA",
+      "firstName": "Mary",
+      "lastName": "Johnson",
+      "email": "user2@example.com",
+      "password": "pass456"
+    },
+    {
+      "id": "91A47BDE-9876-5432-FEDC-123456789ABC",
+      "firstName": "James",
+      "lastName": "Williams",
+      "email": "user3@example.com",
+      "password": "pass789"
+    }
+  ],
+  "profile": {
+    "name": "typicode"
+  },
+  "books": [
+    {
+      "id": 1,
+      "title": "Las aventuras de Juan",
+      "author": "Autor Ficticio",
+      "pages": [
+        "Capítulo 1: Había una vez en un lugar muy lejano...",
+        "Capítulo 2: Continuaron las aventuras de Juan...",
+        "Capítulo 3: El final de la historia se acercaba..."
+      ]
+    },
+    {
+      "id": 2,
+      "title": "El misterio del jardín secreto",
+      "author": "María González",
+      "pages": [
+        "Capítulo 1: El descubrimiento del jardín...",
+        "Capítulo 2: Los secretos ocultos...",
+        "Capítulo 3: La verdad revelada..."
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Viaje al centro del océano",
+      "author": "Carlos Ruiz",
+      "pages": [
+        "Capítulo 1: La expedición comienza...",
+        "Capítulo 2: Encuentros submarinos...",
+        "Capítulo 3: El tesoro perdido..."
+      ]
+    },
+    {
+      "id": 4,
+      "title": "El último dragón",
+      "author": "Ana Martínez",
+      "pages": [
+        "Capítulo 1: La leyenda antigua...",
+        "Capítulo 2: En busca del dragón...",
+        "Capítulo 3: El encuentro final..."
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Detectives por accidente",
+      "author": "Pedro Sánchez",
+      "pages": [
+        "Capítulo 1: Un caso inesperado...",
+        "Capítulo 2: Siguiendo las pistas...",
+        "Capítulo 3: Caso resuelto..."
+      ]
+    },
+    {
+      "id": 6,
+      "title": "El portal mágico",
+      "author": "Laura López",
+      "pages": [
+        "Capítulo 1: El descubrimiento del portal...",
+        "Capítulo 2: Aventuras en otros mundos...",
+        "Capítulo 3: El regreso a casa..."
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Piratas del cielo",
+      "author": "Roberto García",
+      "pages": [
+        "Capítulo 1: La tripulación del aire...",
+        "Capítulo 2: Batallas en las nubes...",
+        "Capítulo 3: Victoria en los cielos..."
+      ]
+    },
+    {
+      "id": 8,
+      "title": "El bosque encantado",
+      "author": "Elena Flores",
+      "pages": [
+        "Capítulo 1: Perdidos en el bosque...",
+        "Capítulo 2: Criaturas mágicas...",
+        "Capítulo 3: El camino de vuelta..."
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Robots rebeldes",
+      "author": "Daniel Torres",
+      "pages": [
+        "Capítulo 1: La revolución mecánica...",
+        "Capítulo 2: Humanos vs máquinas...",
+        "Capítulo 3: Un nuevo orden..."
+      ]
+    },
+    {
+      "id": 10,
+      "title": "La ciudad perdida",
+      "author": "Isabel Ramírez",
+      "pages": [
+        "Capítulo 1: La expedición arqueológica...",
+        "Capítulo 2: Descubrimientos antiguos...",
+        "Capítulo 3: Los secretos revelados..."
+      ]
+    }
+  ]
+}
