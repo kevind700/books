@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * @fileoverview Aplicación de lectura de libros con seguimiento de tiempo y estadísticas
  *
@@ -5,7 +7,8 @@
  * - Lista de libros disponibles ordenada por tiempo de lectura
  * - Lector de libros con navegación entre páginas
  * - Seguimiento del tiempo de lectura por libro
- * - Estadísticas de lectura visualizadas en gráfico circular
+ * - Seguimiento detallado del tiempo por página
+ * - Estadísticas de lectura visualizadas en gráficos
  *
  * @example
  * // Ejemplo de uso del componente HomePage
@@ -24,7 +27,8 @@
  * const estadistica = {
  *   bookId: 1,
  *   title: "Don Quijote",
- *   timeSpent: 3600000, // milisegundos
+ *   timeSpent: 3600000, // milisegundos total
+ *   pageStats: [{page: 0, time: 1800000}, {page: 1, time: 1800000}], // tiempo por página
  *   currentPage: 1
  * }
  */
@@ -41,27 +45,50 @@ import {
   Cell,
   Tooltip,
   Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { Book as BookIcon, BookOpen } from "lucide-react";
+import { Book as BookIcon, BookOpen, Clock, ChartPie } from "lucide-react";
+import { formatDuration, intervalToDuration } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface Book {
-  id: number;
-  title: string;
-  author: string;
-  description: string;
-  pages: string[];
-  lastRead?: number;
-  currentPage?: number;
+  readonly id: number;
+  readonly title: string;
+  readonly author: string;
+  readonly description: string;
+  readonly pages: readonly string[];
+  lastRead: number;
+  currentPage: number;
   startPage?: number;
 }
 
-interface ReadingTime {
-  bookId: number;
-  title: string;
-  timeSpent: number;
-  currentPage?: number;
+interface PageStat {
+  readonly page: number;
+  time: number;
 }
+
+interface ReadingTime {
+  readonly bookId: number;
+  readonly title: string;
+  timeSpent: number;
+  pageStats: PageStat[];
+  currentPage: number;
+}
+
+type ChartData = {
+  readonly name: string;
+  readonly value: number;
+  readonly pageStats: PageStat[];
+};
+
+type PageTimeData = {
+  readonly name: string;
+  readonly tiempo: number;
+};
 
 const chartConfig = {
   desktop: {
@@ -72,80 +99,147 @@ const chartConfig = {
     label: "Mobile",
     color: "#5856D6",
   },
-} satisfies ChartConfig;
+} as const satisfies ChartConfig;
 
 const colors = [
-  "#007AFF", // SF Blue
-  "#FF3B30", // SF Red
-  "#34C759", // SF Green
-  "#5856D6", // SF Purple
-  "#FF9500", // SF Orange
-  "#00C7BE", // SF Teal
-  "#FF2D55", // SF Pink
-  "#AF52DE", // SF Light Purple
-  "#FF6482", // SF Rose
-  "#32ADE6", // SF Light Blue
-];
+  "#007AFF",
+  "#FF3B30",
+  "#34C759",
+  "#5856D6",
+  "#FF9500",
+  "#00C7BE",
+  "#FF2D55",
+  "#AF52DE",
+  "#FF6482",
+  "#32ADE6",
+] as const;
 
-const formatStats = (stats: ReadingTime[]) =>
+const formatStats = (stats: readonly ReadingTime[]): ChartData[] =>
   stats
-    .sort((a, b) => b.timeSpent - a.timeSpent)
+    .toSorted((a, b) => b.timeSpent - a.timeSpent)
     .map((stat) => ({
       name: stat.title,
-      value: Math.floor(stat.timeSpent / 1000), // Convertir a segundos para mostrar
+      value: Math.floor(stat.timeSpent / 1000),
+      pageStats: stat.pageStats,
     }));
 
-const ReadingStats = ({ readingStats }: { readingStats: ReadingTime[] }) => {
+const ReadingStats = ({
+  readingStats,
+}: {
+  readingStats: readonly ReadingTime[];
+}) => {
+  const [selectedBook, setSelectedBook] = useState<ReadingTime | null>(null);
+  const [selectedBookColor, setSelectedBookColor] = useState<string>(colors[0]);
   const formattedStats = formatStats(readingStats);
   const totalTime = formattedStats.reduce((acc, curr) => acc + curr.value, 0);
+  const milliseconds = totalTime * 1000;
+  const duration = intervalToDuration({ start: 0, end: milliseconds });
+
+  const pageTimeData: PageTimeData[] =
+    selectedBook?.pageStats.map((stat) => ({
+      name: `Página ${stat.page + 1}`,
+      tiempo: Math.floor(stat.time / 1000),
+    })) ?? [];
 
   return (
     <Card className="mb-6 p-4 shadow-sm rounded-2xl bg-white/90 backdrop-blur">
-      <h2 className="text-xl font-medium mb-4">Estadísticas de Lectura</h2>
-      <div style={{ width: "100%", height: 300 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ChartContainer config={chartConfig} className="w-full h-full">
-            <PieChart>
-              <Pie
-                data={formattedStats}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-              >
-                {formattedStats.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={colors[index % colors.length]}
-                  />
-                ))}
-              </Pie>
-              <text
-                x="50%"
-                y="50%"
-                textAnchor="middle"
-                dominantBaseline="middle"
-              >
-                {`${totalTime}s`}
-              </text>
-              <Tooltip
-                formatter={(value: number, name) => [
-                  `Tiempo de lectura: ${value} segundos`,
-                  name,
-                ]}
-                contentStyle={{
-                  background: "rgba(255,255,255,0.9)",
-                  border: "none",
-                  borderRadius: "10px",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                }}
-              />
-              <Legend />
-            </PieChart>
-          </ChartContainer>
-        </ResponsiveContainer>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-medium">Estadísticas de Lectura</h2>
+        <div className="flex items-center gap-2">
+          <Clock className="w-5 h-5 text-gray-500" />
+          <span className="font-medium">
+            Tiempo total: {formatDuration(duration, { locale: es })}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig}>
+              <PieChart>
+                <Pie
+                  data={formattedStats}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  onClick={(data, index) => {
+                    setSelectedBook(
+                      readingStats.find((stat) => stat.title === data.name) ??
+                        null,
+                    );
+                    setSelectedBookColor(colors[index % colors.length]);
+                  }}
+                >
+                  {formattedStats.map((_entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={colors[index % colors.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: number, name) => {
+                    const duration = intervalToDuration({
+                      start: 0,
+                      end: value * 1000,
+                    });
+                    return [formatDuration(duration, { locale: es }), name];
+                  }}
+                  contentStyle={{
+                    background: "rgba(255,255,255,0.9)",
+                    border: "none",
+                    borderRadius: "10px",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                  }}
+                />
+                <Legend />
+              </PieChart>
+            </ChartContainer>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="h-[300px] flex flex-col">
+          {selectedBook ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={pageTimeData}>
+                <XAxis dataKey="name" />
+                <YAxis
+                  tickFormatter={(value) => `${Math.floor(value / 60)}m`}
+                  label={{
+                    value: "Tiempo (minutos)",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
+                />
+                <Tooltip
+                  formatter={(value: number) => {
+                    const duration = intervalToDuration({
+                      start: 0,
+                      end: value * 1000,
+                    });
+                    return [
+                      formatDuration(duration, { locale: es }),
+                      "Tiempo de lectura",
+                    ];
+                  }}
+                />
+                <Bar dataKey="tiempo" fill={selectedBookColor} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4 p-4">
+              <ChartPie className="w-12 h-12 text-gray-400" />
+              <p className="text-center">
+                Haz clic en alguna sección de la gráfica circular para ver
+                estadísticas detalladas del tiempo de lectura por página
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </Card>
   );
@@ -158,7 +252,7 @@ const ProgressBar = ({
   current: number;
   total: number;
 }) => {
-  const percentage = current ? (current / total) * 100 : 0;
+  const percentage = (current / total) * 100;
 
   return (
     <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -194,7 +288,7 @@ const BookCard = ({
       <div>
         <h2 className="text-xl font-medium">{book.title}</h2>
         <p className="text-gray-500">por {book.author}</p>
-        {isLastRead && book.currentPage !== undefined && (
+        {isLastRead && (
           <button
             className="mt-2 text-sm text-[#007AFF] hover:text-[#0051E6]"
             onClick={(e) => {
@@ -209,10 +303,7 @@ const BookCard = ({
     </div>
     <div className="text-right">
       <p className="text-gray-600 mb-2">{book.pages.length} páginas</p>
-      <ProgressBar
-        current={book.currentPage || 0}
-        total={book.pages.length - 1}
-      />
+      <ProgressBar current={book.currentPage} total={book.pages.length - 1} />
     </div>
   </div>
 );
@@ -222,32 +313,28 @@ const BookList = ({
   readingStats,
   onSelectBook,
 }: {
-  books: Book[];
-  readingStats: ReadingTime[];
+  books: readonly Book[];
+  readingStats: readonly ReadingTime[];
   onSelectBook: (book: Book) => void;
 }) => {
   const booksWithStats = books.map((book) => {
     const stats = readingStats.find((stat) => stat.bookId === book.id);
     return {
       ...book,
-      timeSpent: stats?.timeSpent || 0,
-      currentPage: stats?.currentPage || book.currentPage || 0,
+      timeSpent: stats?.timeSpent ?? 0,
+      currentPage: stats?.currentPage ?? book.currentPage,
     };
   });
 
-  // Find the last read book
   const lastReadBook = booksWithStats.reduce(
-    (prev, current) =>
-      (current.lastRead || 0) > (prev.lastRead || 0) ? current : prev,
+    (prev, current) => (current.lastRead > prev.lastRead ? current : prev),
     booksWithStats[0],
   );
 
-  // Sort remaining books by time spent
   const otherBooks = booksWithStats
     .filter((book) => book.id !== lastReadBook?.id)
     .sort((a, b) => b.timeSpent - a.timeSpent);
 
-  // Combine with last read book first
   const sortedBooks = lastReadBook ? [lastReadBook, ...otherBooks] : otherBooks;
 
   return (
@@ -257,7 +344,7 @@ const BookList = ({
           key={book.id}
           book={book}
           onSelect={onSelectBook}
-          isLastRead={!!readingStats.length && book.id === lastReadBook?.id}
+          isLastRead={book.id === lastReadBook?.id}
         />
       ))}
     </div>
@@ -339,7 +426,7 @@ const BookReader = ({
 };
 
 const calculateTimeSpent = (startTime: number): number =>
-  Date.now() - startTime; // Devolver milisegundos
+  Date.now() - startTime;
 
 const updateStats = (
   currentStats: ReadingTime[],
@@ -351,7 +438,19 @@ const updateStats = (
   const existingRecord = newStats.find((stat) => stat.bookId === book.id);
 
   if (existingRecord) {
-    existingRecord.timeSpent += timeSpent;
+    const existingPageStat = existingRecord.pageStats.find(
+      (ps) => ps.page === currentPage,
+    );
+    if (existingPageStat) {
+      existingPageStat.time += timeSpent;
+    } else {
+      existingRecord.pageStats.push({ page: currentPage, time: timeSpent });
+    }
+
+    existingRecord.timeSpent = existingRecord.pageStats.reduce(
+      (sum, ps) => sum + ps.time,
+      0,
+    );
     existingRecord.currentPage = currentPage;
     return newStats;
   }
@@ -362,6 +461,7 @@ const updateStats = (
       bookId: book.id,
       title: book.title,
       timeSpent,
+      pageStats: [{ page: currentPage, time: timeSpent }],
       currentPage,
     },
   ];
@@ -377,17 +477,16 @@ export default function HomePage() {
   const fetchBooks = async () => {
     try {
       const response = await fetch("http://localhost:3001/books");
-      const data = await response.json();
+      const data = (await response.json()) as Book[];
 
-      // Load saved progress from localStorage
       const savedStats = JSON.parse(
-        localStorage.getItem("readingStats") || "[]",
-      );
-      const booksWithProgress = data.map((book: Book) => ({
+        localStorage.getItem("readingStats") ?? "[]",
+      ) as ReadingTime[];
+
+      const booksWithProgress = data.map((book) => ({
         ...book,
         currentPage:
-          savedStats.find((stat: ReadingTime) => stat.bookId === book.id)
-            ?.currentPage || 0,
+          savedStats.find((stat) => stat.bookId === book.id)?.currentPage ?? 0,
         lastRead: Date.now(),
       }));
 
@@ -416,16 +515,15 @@ export default function HomePage() {
       setReadingStats(newStats);
       localStorage.setItem("readingStats", JSON.stringify(newStats));
 
-      // Update book's last read time and current page
-      const updatedBooks = books.map((b) => {
-        if (b.id === book.id) {
-          return {
-            ...b,
-            lastRead: Date.now(),
-            currentPage: currentPage,
-          };
-        }
-        return b;
+      const updatedBooks = books.map((currentBook) => {
+        const isSelectedBook = currentBook.id === book.id;
+        if (!isSelectedBook) return currentBook;
+
+        return {
+          ...currentBook,
+          lastRead: Date.now(),
+          currentPage,
+        };
       });
       setBooks(updatedBooks);
     }
@@ -434,7 +532,7 @@ export default function HomePage() {
   const handleSelectBook = (book: Book) => {
     const savedStats = readingStats.find((stat) => stat.bookId === book.id);
     setSelectedBook(book);
-    setCurrentPage(book.startPage || savedStats?.currentPage || 0);
+    setCurrentPage(book.startPage ?? savedStats?.currentPage ?? 0);
     setStartTime(Date.now());
   };
 
@@ -443,13 +541,12 @@ export default function HomePage() {
       const newPage = direction === "next" ? currentPage + 1 : currentPage - 1;
       setCurrentPage(newPage);
 
-      // Update stats with new page
       const timeSpent = startTime ? calculateTimeSpent(startTime) : 0;
       const newStats = updateStats(
         readingStats,
         selectedBook,
         timeSpent,
-        newPage,
+        currentPage,
       );
       setReadingStats(newStats);
       localStorage.setItem("readingStats", JSON.stringify(newStats));
