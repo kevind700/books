@@ -54,9 +54,13 @@ export default function LoginPage() {
 
   return (
     <div className={styles.wrapper}>
+      <div className="text-center">
+        <h1 className={styles.logo}>LN</h1>
+        <h2 className={styles.logo}>Libros para Niños</h2>
+      </div>
       <div className={styles.panel}>
         <div className="mb-8">
-          <h2 className={styles.title}>Bienvenido</h2>
+          <h3 className={styles.title}>Bienvenido</h3>
         </div>
         <form onSubmit={submit} className="space-y-6">
           <div className="space-y-2">

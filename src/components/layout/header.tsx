@@ -2,11 +2,33 @@ import styles from "./styles.module.css";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { usePathname, useRouter } from "next/navigation";
-import { deleteCookie } from "cookies-next";
+import { deleteCookie, getCookie } from "cookies-next";
+import { useEffect, useState } from "react";
+import { User } from "@/types/user";
 
 export default function Header() {
+  const [user, setUser] = useState<User>();
   const pathname = usePathname();
   const router = useRouter();
+
+  const fetchUser = async () => {
+    try {
+      const token = getCookie("token");
+      const response = await fetch("/api/user", {
+        headers: {
+          token: token as string,
+        },
+      });
+      const data = (await response.json()) as User;
+      setUser(data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   const handleLogout = () => {
     deleteCookie("token");
@@ -15,7 +37,14 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
-      <div className={styles.logo}>LN</div>
+      <div className="flex items-center gap-10">
+        <div className={styles.logo}>LN</div>
+        {user && (
+          <div
+            className={styles.name}
+          >{`Hola, ${user.firstName} ${user.lastName}`}</div>
+        )}
+      </div>
       <nav className={styles.navigation}>
         <Link
           href={"/"}
