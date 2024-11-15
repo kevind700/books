@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     const response = await fetch(`http://localhost:3001/users/${token}`);
     const user: User = await response.json();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
     return Response.json(userWithoutPassword);
   } catch {
