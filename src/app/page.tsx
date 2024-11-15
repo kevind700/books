@@ -1,13 +1,14 @@
 "use client";
 
 import Layout from "@/components/layout/layout";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { BookList } from "./components/books/BookList";
 import { BookReader } from "./components/books/BookReader";
 import { ReadingStats } from "./components/stats/ReadingStats";
 import { Book } from "@/types/book";
 import { ReadingTime } from "@/types/stats";
 import { calculateTimeSpent, updateStats } from "@/utils/stats";
+import { BookSkeleton } from "./components/books/BookSkeleton";
 
 export default function HomePage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -16,8 +17,9 @@ export default function HomePage() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [readingStats, setReadingStats] = useState<ReadingTime[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getUserIdFromCookie = () => {
+  const getUserIdFromCookie = useCallback(() => {
     const cookies = document.cookie.split(";");
     const tokenCookie = cookies.find((cookie) =>
       cookie.trim().startsWith("token="),
@@ -28,10 +30,11 @@ export default function HomePage() {
       return token;
     }
     return null;
-  };
+  }, []);
 
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     try {
+      setIsLoading(true);
       const response = await fetch("/api/books");
       const data = (await response.json()) as Book[];
 
@@ -52,10 +55,12 @@ export default function HomePage() {
       setBooks(booksWithProgress);
     } catch (error) {
       console.error("Error fetching books:", error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [getUserIdFromCookie]);
 
-  const loadSavedStats = () => {
+  const loadSavedStats = useCallback(() => {
     const currentUserId = getUserIdFromCookie();
     if (!currentUserId) return;
 
@@ -63,12 +68,12 @@ export default function HomePage() {
     if (savedStats) {
       setReadingStats(JSON.parse(savedStats));
     }
-  };
+  }, [getUserIdFromCookie]);
 
   useEffect(() => {
     fetchBooks();
     loadSavedStats();
-  }, []);
+  }, [fetchBooks, loadSavedStats]);
 
   const updateReadingTime = (book: Book) => {
     if (startTime && userId) {
@@ -133,11 +138,15 @@ export default function HomePage() {
         )}
 
         <h1 className="text-2xl font-medium mb-6">Libros Disponibles</h1>
-        <BookList
-          books={books}
-          readingStats={readingStats}
-          onSelectBook={handleSelectBook}
-        />
+        {isLoading ? (
+          <BookSkeleton />
+        ) : (
+          <BookList
+            books={books}
+            readingStats={readingStats}
+            onSelectBook={handleSelectBook}
+          />
+        )}
 
         {selectedBook && (
           <BookReader

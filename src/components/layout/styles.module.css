@@ -7,7 +7,7 @@
 }
 
 .name {
-  @apply font-bold text-xl select-none;
+  @apply font-bold text-xl select-none md:block hidden;
 }
 
 .navigation {
