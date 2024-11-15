@@ -1,3 +1,5 @@
+const API_URL = process.env.SERVER_JSON_HOST || "http://localhost:3001";
+
 export async function POST(request: Request) {
   const { email, password } = await request.json();
 
@@ -8,7 +10,7 @@ export async function POST(request: Request) {
   };
 
   try {
-    const response = await fetch("http://localhost:3001/users");
+    const response = await fetch(`${API_URL}/users`);
     const users = await response.json();
 
     const validUser = users.find(

@@ -1,3 +1,5 @@
+const API_URL = process.env.SERVER_JSON_HOST || "http://localhost:3001";
+
 export async function GET(request: Request) {
   const token = request.headers.get("token");
 
@@ -14,7 +16,7 @@ export async function GET(request: Request) {
   };
 
   try {
-    const response = await fetch(`http://localhost:3001/users/${token}`);
+    const response = await fetch(`${API_URL}/users/${token}`);
     const user: User = await response.json();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

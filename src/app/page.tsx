@@ -32,7 +32,7 @@ export default function HomePage() {
 
   const fetchBooks = async () => {
     try {
-      const response = await fetch("http://localhost:3001/books");
+      const response = await fetch("/api/books");
       const data = (await response.json()) as Book[];
 
       const currentUserId = getUserIdFromCookie();
