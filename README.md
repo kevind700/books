@@ -2,6 +2,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Prerequisites
+
+Before starting the development server, ensure the following:
+
+1. Create a `.env` file in the root directory and populate it with the values from `.env.example`.
+
+2. Alternatively, if you prefer not to create a `.env` file, you can use `json-server` locally by running the following command:
+```bash
+npm run server
+```
+
 First, run the development server:
 
 ```bash
